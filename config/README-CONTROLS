@@ -1,0 +1,13 @@
+Control UWSGI:
+=================
+initctl reload-configuration
+initctl start uwsgi
+initctl stop uwsgi
+
+CONTROL nginx
+==============
+nginx
+nginx -s stop
+nginx -s reload
+
+

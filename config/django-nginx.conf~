@@ -1,0 +1,50 @@
+# upstream app-server
+upstream django 
+{
+    server unix:///home/ubuntu/cloudpass/code/server-side/app-server.sock;
+}
+
+# Convert HTTP requests into HTTPS requests
+server 
+{
+   listen 80 default_server;
+   listen [::]:80 default_server ipv6only=on;
+   server_name 54.67.1.58 localhost;
+   rewrite        ^ https://$server_name$request_uri? permanent;
+}
+
+server 
+{
+   listen 443 default_server ssl;
+   server_name 54.67.1.58 localhost;
+
+ #  listen 80 default_server;
+ #  ssl on;
+ #  ssl_session_timeout  5m;
+ #  ssl_protocols  SSLv2 SSLv3 TLSv1;
+ #  ssl_ciphers  ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+ #  ssl_prefer_server_ciphers   on;
+
+   ssl_certificate        /etc/ssl/certs/unified.remote-crypto.io.crt;
+   ssl_certificate_key    /etc/ssl/private/remote-crypto.io.key;
+
+   charset     utf-8;
+   client_max_body_size 250K;
+
+   root /www/static;
+   autoindex on;
+   index index.html index.htm;
+
+   location /
+   {
+     # Serve up files and directories from nginx, others go to the app server.
+     try_files $uri $uri/ @proxy;
+   }
+ 
+    # All unkown files go to the app server.
+    location @proxy 
+    {
+        uwsgi_pass  django;
+        include     /etc/nginx/uwsgi_params; 
+    }
+}

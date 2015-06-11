@@ -1,0 +1,55 @@
+header.marquee {
+    padding: 50px 0;
+    text-align: center;
+    color: #fff;
+    background-color: #b84d45;
+    background-image: url(/assets/bg.png)
+}
+
+header.marquee .brand-name {
+    display: block;
+    font-size: 50px;
+    line-height: 1
+}
+
+header.marquee h1 {
+    font-size: 24px;
+    line-height: 1;
+    margin: 20px 0;
+    color: #fff;
+}
+
+
+header.marquee p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, .8);
+    line-height: 1.4
+}
+
+header.marquee p a {
+    color: #fff
+}
+
+header.marquee img.logo {
+    margin-bottom: 50px
+}
+
+header.marquee .btn-cta {
+    margin: 20px 0 0;
+    padding: 10px 15px;
+    border: 1px solid #fff;
+    background-color: transparent;
+    color: #fff;
+    font-family: Montserrat, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 14px
+}
+
+header.marquee .btn-cta:hover {
+    color: #b84d45;
+    background-color: #fff
+}
+
+h1 {
+  text-align: center;
+}
