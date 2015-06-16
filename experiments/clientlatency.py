@@ -7,16 +7,19 @@ from pyrelic import vpop
 from pyrelic import pbc
 from pyrelic.common import *
 from httpJson import *
+import argparse, sys
+from timeit import timeit
 
-server = "http://localhost:8000"
-evalUrl = server + "/pythia/eval"
+defaultserver = "http://localhost:8000"
+defaultiterations = 100
+evalUrl = defaultserver + "/pythia/eval"
 
 m = "This is my next"
 t = "super+secret_tweak"
 w = "super_secret+client-id"
 
 
-def eval():
+def eval(url, m, t, w):
     """
     Request a PRF eval from the Pythia server
     """
@@ -24,10 +27,8 @@ def eval():
     r,x = vpop.blind(m)
     xWrap = vpop.wrap(x)
 
-    params = { "x":xWrap, "w":w, "t":t }
-
     # Submit the request and do a quick-check on the response
-    response = fetch(evalUrl, params)
+    response = fetch(url, { "x":xWrap, "w":w, "t":t })
 
     # Extract fields from the response
     y,p,c,u = [ response[name] for name in ["y","p","c","u" ] ]
@@ -42,4 +43,34 @@ def eval():
     # Compute the final result
     z = vpop.deblind(r,y)
 
-eval()
+
+def main():
+    """
+    Parse command-line options for clientlatency
+    """
+    parser = argparse.ArgumentParser(
+        description='Time the latency for Pythia client eval requests')
+
+    parser.add_argument('iterations', type=int,
+                       help='Number of eval requests to issue')
+
+    parser.add_argument('url', 
+                       help='URL to Pythia eval service. Example: https://remote-crypto.io/pythia/eval')
+    args = parser.parse_args(sys.argv[1:])
+
+    timetest(args.iterations, args.url)
+
+
+def timetest(iterations, url):
+    """
+    Runs eval through timeit and reports the results.
+    """
+    print "{}x {}".format(iterations, url)
+    latency = timeit(lambda: eval(url, m, t, w), number=iterations)
+    meanMs = latency/iterations * 1000
+    print "{:4.3f} ms (mean)".format(meanMs)
+
+
+# Run!
+if __name__ == "__main__":
+    main()
