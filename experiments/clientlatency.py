@@ -10,9 +10,7 @@ from httpJson import *
 import argparse, sys
 from timeit import timeit
 
-defaultserver = "http://localhost:8000"
-defaultiterations = 100
-evalUrl = defaultserver + "/pythia/eval"
+warmupIterations = 100
 
 m = "This is my next"
 t = "super+secret_tweak"
@@ -65,8 +63,12 @@ def timetest(iterations, url):
     """
     Runs eval through timeit and reports the results.
     """
+    def warmup():
+      for _ in range(warmupIterations): 
+        eval(url, m, t, w)
+
     print "{}x {}".format(iterations, url)
-    latency = timeit(lambda: eval(url, m, t, w), number=iterations)
+    latency = timeit(lambda: eval(url, m, t, w), setup=warmup, number=iterations)
     meanMs = latency/iterations * 1000
     print "{:4.3f} ms (mean)".format(meanMs)
 
