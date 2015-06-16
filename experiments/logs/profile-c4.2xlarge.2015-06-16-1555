@@ -1,0 +1,148 @@
+Wrote profile results to profile.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 56.1297 s
+File: profile.py
+Function: primitives at line 12
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    12                                           @profile
+    13                                           def primitives():
+    14                                               """
+    15                                               Perform primitive operations for profiling
+    16                                               """
+    17     10000        99532     10.0      0.2      z = randomZ(orderG1())
+    18                                           
+    19                                               # G1 operations
+    20     10000       915068     91.5      1.6      P = randomG1()
+    21     10000       273157     27.3      0.5      Q = hashG1(w)
+    22     10000        57127      5.7      0.1      g1Add = P + Q
+    23     10000      1746551    174.7      3.1      g1ScalarMultiply = z*P
+    24                                           
+    25                                               # G2 operations
+    26     10000      7020114    702.0     12.5      P = randomG2()
+    27     10000      1789815    179.0      3.2      Q = hashG2(w)
+    28     10000        64550      6.5      0.1      g2Add = P + Q
+    29     10000      5711046    571.1     10.2      g2ScalarMultiply = z*P
+    30                                           
+    31                                               # Gt operations
+    32     10000      4478283    447.8      8.0      P = randomGt()
+    33     10000      4424651    442.5      7.9      Q = randomGt()
+    34     10000        91726      9.2      0.2      gtMult = P * Q
+    35     10000     11472995   1147.3     20.4      gtExp = P**z
+    36                                           
+    37                                               # Pairing
+    38     10000      7924199    792.4     14.1      x,y = (randomG1(), randomG2())
+    39     10000     10060930   1006.1     17.9      R = pair(x,y)
+
+Total time: 96.3008 s
+File: profile.py
+Function: protoWithProof at line 42
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    42                                           @profile
+    43                                           def protoWithProof():
+    44                                               """
+    45                                               Run the full protocol including proof generation and verification.
+    46                                               """
+    47     10000      2408305    240.8      2.5      r, x = blind(m)
+    48     10000     15037361   1503.7     15.6      y,kw,tTilde = eval(w,t,x,msk,s)
+    49                                           
+    50     10000     26565922   2656.6     27.6      pi = prove(x, tTilde, kw, y)
+    51     10000     40741845   4074.2     42.3      verify(x, t, y, pi, errorOnFail=True)
+    52                                           
+    53     10000     11547364   1154.7     12.0      z = deblind(r, y)
+
+Total time: 0 s
+File: profile.py
+Function: proofMethods at line 56
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    56                                           @profile
+    57                                           def proofMethods():
+    58                                               """
+    59                                               Run the full protocol including proof generation and verification.
+    60                                               """
+    61                                               r, x = blind(m)
+    62                                               y,kw,tTilde = eval(w,t,x,msk,s)
+    63                                           
+    64                                               # Proof in Gt/Gt
+    65                                               pi = proveGt(x, tTilde, kw, y)
+    66                                               verifyGt(x, tTilde, y, pi, errorOnFail=True)
+    67                                           
+    68                                               # Proof in G1/Gt
+    69                                               pi = proveG1(x, tTilde, kw, y)
+    70                                               verifyG1(x, tTilde, y, pi, errorOnFail=True)
+    71                                           
+    72                                               z = deblind(r, y)
+
+Total time: 0 s
+File: profile.py
+Function: protoProofGt at line 75
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    75                                           @profile
+    76                                           def protoProofGt():
+    77                                               r, x = blind(m)
+    78                                               y,kw,tTilde = eval(w,t,x,msk,s)
+    79                                               pi = proveGt(x, tTilde, kw, y)
+    80                                               verifyGt(x, tTilde, y, pi, errorOnFail=True)
+    81                                               z = deblind(r, y)
+
+Total time: 0 s
+File: profile.py
+Function: protoProofG1 at line 84
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    84                                           @profile
+    85                                           def protoProofG1():
+    86                                               r, x = blind(m)
+    87                                               y,kw,tTilde = eval(w,t,x,msk,s)
+    88                                               pi = proveG1(x, tTilde, kw, y)
+    89                                               verifyG1(x, tTilde, y, pi, errorOnFail=True)
+    90                                               z = deblind(r, y)
+
+Total time: 0 s
+File: profile.py
+Function: proofMethods at line 93
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    93                                           @profile
+    94                                           def proofMethods():
+    95                                               """
+    96                                               Run the full protocol including proof generation and verification.
+    97                                               """
+    98                                               r, x = blind(m)
+    99                                               y,kw,tTilde = eval(w,t,x,msk,s)
+   100                                           
+   101                                               # Proof in Gt/Gt
+   102                                               pi = proveGt(x, tTilde, kw, y)
+   103                                               verifyGt(x, tTilde, y, pi, errorOnFail=True)
+   104                                           
+   105                                               # Proof in G1/Gt
+   106                                               pi = proveG1(x, tTilde, kw, y)
+   107                                               verifyG1(x, tTilde, y, pi, errorOnFail=True)
+   108                                           
+   109                                               z = deblind(r, y)
+
+Total time: 28.9939 s
+File: profile.py
+Function: protoFast at line 112
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   112                                           @profile   
+   113                                           def protoFast():
+   114                                               """
+   115                                               Runs the protocol but omits proof generation and verification.
+   116                                               """
+   117     10000      2403036    240.3      8.3      r, x = blind(m)
+   118     10000     15042938   1504.3     51.9      y,kw,tTilde = eval(w,t,x,msk,s)
+   119     10000     11547910   1154.8     39.8      z = deblind(r, y)
+
