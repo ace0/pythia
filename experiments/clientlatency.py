@@ -17,7 +17,7 @@ t = "super+secret_tweak"
 w = "super_secret+client-id"
 
 
-def eval(url, m, t, w):
+def eval(url, m, t, w, keepalive):
     """
     Request a PRF eval from the Pythia server
     """
@@ -26,7 +26,7 @@ def eval(url, m, t, w):
     xWrap = vpop.wrap(x)
 
     # Submit the request and do a quick-check on the response
-    response = fetch(url, { "x":xWrap, "w":w, "t":t })
+    response = fetch(url, { "x":xWrap, "w":w, "t":t }, keepalive=keepalive)
 
     # Extract fields from the response
     y,p,c,u = [ response[name] for name in ["y","p","c","u" ] ]
@@ -54,22 +54,33 @@ def main():
 
     parser.add_argument('url', 
                        help='URL to Pythia eval service. Example: https://remote-crypto.io/pythia/eval')
+
+    parser.add_argument('--cold', action='store_false', dest='keepalive',
+                       help='Disable HTTP KeepAlive and make cold connections each time.')
+
+
     args = parser.parse_args(sys.argv[1:])
 
-    timetest(args.iterations, args.url)
+    timetest(args.iterations, args.url, args.keepalive)
 
 
-def timetest(iterations, url):
+def timetest(iterations, url, keepalive):
     """
     Runs eval through timeit and reports the results.
     """
     def warmup():
       for _ in range(warmupIterations): 
-        eval(url, m, t, w)
+        eval(url, m, t, w, keepalive)
 
-    print "{}x {}".format(iterations, url)
-    latency = timeit(lambda: eval(url, m, t, w), setup=warmup, number=iterations)
+    # Indicate that we're starting
+    print "{}x {} keepalive:{}".format(iterations, url, keepalive)
+
+    # Run eval and compute mean execution time
+    latency = timeit(lambda: eval(url, m, t, w, keepalive), 
+            setup=warmup, number=iterations)
     meanMs = latency/iterations * 1000
+
+    # Print the result
     print "{:4.3f} ms (mean)".format(meanMs)
 
 
