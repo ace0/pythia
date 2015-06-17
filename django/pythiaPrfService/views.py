@@ -5,18 +5,25 @@ from response import *
 from datastore import *
 from settings import *
 from datetime import datetime
-from pyrelic import vpop
+from pyrelic import vpop, vprf
 
 
-def eval(request):
+evalVpop = lambda request: eval(request, vpop) 
+evalVprf = lambda request: eval(request, vprf) 
+
+
+def eval(request, prf):
     """
-    Process eval (PRF) requests.
+    Process eval @request using @prf.
     """
     required = ["w", "t", "x"]
     optional = ["skid", "skipproof"]
 
+    # Parse and validate parameters from the request.
     try:
-        w,t,x,skid,skipproof = getParams(request, required, optional)
+        w,t,x,skid,skipproof = \
+            getParams(request, required, optional)
+
     except ServiceException as e:
         return e.errorResponse
 
@@ -28,32 +35,33 @@ def eval(request):
         return ErrorResponse(ERROR_EXCEEDED_QUERY_LIMIT, ERROR_CODE_QUERY_LIMIT)
 
     # Run eval and send the response as JSON
-    return JsonResponse(runEval(w,t,x,proof))
+    return JsonResponse(runEval(prf,w,t,x,proof))
 
 
-def runEval(w,t,x,proof):
+
+def runEval(prf,w,t,x,proof):
     """
-    Runs the Pythia eval function.
+    Runs the Pythia eval function using @prf.
     """
     # Deserialize parameter x
-    x = vpop.unwrapG1(x)
+    x = prf.unwrapX(x)
 
     # Get the (secret) state table entry assigned to this w
     s = getStateEntry(w)
-    y,kw,tTilde = vpop.eval(w,t,x,SERVER_SECRET_KEY,s)
+    y,kw,tTilde = prf.eval(w,t,x,SERVER_SECRET_KEY,s)
 
     # Package our results into a dictionary d
-    d = { "y" : vpop.wrap(y),
+    d = { "y" : prf.wrap(y),
           "message" : "Thank you for using the Pythia PRF service for all your password hardening needs", 
         }
 
     # Generate a proof, if requested
     if proof:
-        p,c,u = vpop.prove(x,tTilde,kw,y)
+        p,c,u = prf.prove(x,tTilde,kw,y)
         d.update( 
-            { "p": vpop.wrap(p), 
-              "c": vpop.wrap(c),
-              "u": vpop.wrap(u)
+            { "p": prf.wrap(p), 
+              "c": prf.wrap(c),
+              "u": prf.wrap(u)
              } )
 
     return d

@@ -25,7 +25,16 @@ def buildTable(keys):
 	return dict([ (skid(k), k) for k in keys])
 
 
-def hmac(tag, message, key, alg=HASH_ALG, encode=base64.urlsafe_b64encode):
+def sha(*args):
+	"""
+	Runs @args through the current hash algorithm (SHA256) and returns the 
+	result as a (URL-safe) base64 string.
+	"""
+	i = ''.join(str(x) for x in args)
+	return base64.urlsafe_b64encode( HASH_ALG(i).digest() )
+
+
+def hmac(key, message, tag=None, alg=HASH_ALG, encode=base64.urlsafe_b64encode):
 	"""
 	Generates a hashed message authentication code (HMAC).
 	"""
