@@ -23,13 +23,12 @@ serviceTable = {
     "bls"  : bls
 }
 
-# Mapping service name to url
+# A table mapping service name to url
 urlTable = {
     "vpop" : "eval",
     "vprf" : "eval-unb",
     "bls"  : "eval-bls"
 }
-
 
 
 def eval(prf, url,w, t, m, keepalive):
@@ -43,7 +42,6 @@ def eval(prf, url,w, t, m, keepalive):
     # Submit the request and do a quick-check on the response
     response = fetch(url, { "x":xWrap, "w":w, "t":t }, keepalive=keepalive)
 
-
     # Extract fields from the response
     y,p = prf.unwrapY(response["y"]), prf.unwrapP(response["p"]) 
     return 
@@ -52,8 +50,6 @@ def eval(prf, url,w, t, m, keepalive):
         c,u = prf.unwrapC(response["c"]), prf.unwrapU(response["u"]) 
     else:
         c,u = None,None
-
-    # dp(x=x, t=t, y=y, p=p, c=c, u=u)
 
     # Verify the proof
     prf.verify(x, t, y, (p,c,u), errorOnFail=True)
