@@ -13,12 +13,23 @@ then
     SERVER=$(cat server)
 fi
 
-SERVER=${SERVER:-DEV_SERVER}
+SERVER=${SERVER:-$DEV_SERVER}
 
 # Build the URL
-URL=$SERVER/pythia/eval
+URL=$SERVER/pythia
+
+# Run hot and cold tests for a given service
+function runBoth()
+{
+    SERVICE=$1
+    python clientlatency.py $N $URL $SERVICE
+    echo
+    python clientlatency.py $N $URL $SERVICE --cold
+    echo
+    echo
+}
 
 # Run the latency tests
-python clientlatency.py $N $URL
-echo
-python clientlatency.py $N $URL --cold
+runBoth vpop
+runBoth vprf
+runBoth bls
