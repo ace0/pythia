@@ -5,16 +5,18 @@ from response import *
 from datastore import *
 from settings import *
 from datetime import datetime
-from pyrelic import vpop, vprf
+from pyrelic import vpop, vprf, bls
 
-
+# Entry points for each PRF variant.
 evalVpop = lambda request: eval(request, vpop) 
 evalVprf = lambda request: eval(request, vprf) 
+evalBls = lambda request: eval(request, bls) 
 
 
 def eval(request, prf):
     """
-    Process eval @request using @prf.
+    Process eval @request using @prf. This is a common routine for evalVpop, 
+    evalVprf (also called eval-unb), and evalBls.
     """
     required = ["w", "t", "x"]
     optional = ["skid", "skipproof"]
@@ -38,7 +40,6 @@ def eval(request, prf):
     return JsonResponse(runEval(prf,w,t,x,proof))
 
 
-
 def runEval(prf,w,t,x,proof):
     """
     Runs the Pythia eval function using @prf.
@@ -55,16 +56,21 @@ def runEval(prf,w,t,x,proof):
           "message" : "Thank you for using the Pythia PRF service for all your password hardening needs", 
         }
 
-    # Generate a proof, if requested
+    # Generate a proof, if requested. Note that BLS eval queries don't have any
+    # proof beyond
     if proof:
         p,c,u = prf.prove(x,tTilde,kw,y)
-        d.update( 
-            { "p": prf.wrap(p), 
-              "c": prf.wrap(c),
-              "u": prf.wrap(u)
-             } )
+        d.update( { "p": prf.wrap(p) } )
+
+        # The BLS protocol doesn't have items c,u
+        if c and u:
+            d.update( 
+                { "c": prf.wrap(c),
+                  "u": prf.wrap(u)
+                 } )
 
     return d
+
 
 # def updateRequest(request):
 #     """
@@ -162,36 +168,6 @@ def runEval(prf,w,t,x,proof):
 #     return (not vcodeServer or vcodeServer != vcodeClient)
 
 
-# def runPrf(prf, w, t, m, skid):
-#     """
-#     Runs the parameters (w,t,m,skid) through the Pythia protocol using @prf
-#     and returns results as a dictionary.
-#     """
-#     # Grab the state for this client ID
-#     z = getStateEntry(w)
-
-#     (p,y,c,u,ePrime) = prf.query(w, t, m, sk=SERVER_SECRET_KEY, z=z) 
-
-#     # Pack the results into a dictionary.
-#     d = {'p': p, 
-#          'y': y,
-#          'c': c,
-#          'u': u,
-#          'skid': SERVER_SKID
-#     }
-
-#     # Check the skid to see if we need to append a delta value.
-#     if skid and skid != SERVER_SKID:
-#         # Verify that this is a valid SKID.
-#         if skid not in keyTable:
-#             return ErrorResponse("Unkown secret key identifier (SKID).")
-
-#         d["delta"] = prf.delta(ePrime=ePrime, w=w, sk=keyTable[skid], z=z)
-
-#     # Return results as a dictionary.
-#     return d
-
-
 def getParams(request, required, optional=None):
     """
     Retrieves named parameters from the HTTP request. @required is a list of
@@ -228,8 +204,3 @@ def getParams(request, required, optional=None):
         return params[0]
     else:
         return tuple(params)
-
-
-
-
-

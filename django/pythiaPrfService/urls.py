@@ -8,6 +8,7 @@ import views
 urlpatterns = [
     url(r'^eval$', views.evalVpop),
     url(r'^eval-unb$', views.evalVprf),
+    url(r'^eval-bls$', views.evalBls),
 
 	# Client key rotation
 	# url(r'^update-request$', views.updateRequest),

@@ -1,7 +1,12 @@
+"""
+Unit tests for the Pythia PRF service implementation.
+"""
 from django.test import SimpleTestCase
 import json
 from settings import dp
-from pyrelic import vpop
+from pyrelic import vpop, vprf, bls
+from pyrelic.pbc import G1Element, G2Element
+from crypto import *
 
 
 class VpopEvalTest(SimpleTestCase):
@@ -179,9 +184,6 @@ class VpopEvalTest(SimpleTestCase):
         x = vpop.wrap(x)
         return r, VpopEvalTest.urlTemplate.format(VpopEvalTest.w,VpopEvalTest.t,x)
 
-from pyrelic import vprf
-from pyrelic.pbc import G1Element
-from crypto import *
 
 class UnbEvalTest(SimpleTestCase):
     """
@@ -288,4 +290,108 @@ class UnbEvalTest(SimpleTestCase):
 
         # Test the proof
         self.assertTrue( vprf.verify(self.x, self.t, y, (p,c,u), 
+                errorOnFail=False) )
+
+
+class BlsEvalTest(SimpleTestCase):
+    """
+    Tests the eval API for BLS PRF implementation.
+    """
+    def setUp(self):        
+        self.urlTemplate = "/pythia/eval-bls?w={}&t={}&x={}"
+    
+        # Dummy values that can be used for testing
+        self.w = "abcdefg0987654321"
+        self.t = "123456789poiuytrewq"
+        self.pw = "super secret pw"
+        self.salt = secureRandom()
+        self.x = sha(self.salt, self.pw)
+        self.standardUrl = self.urlTemplate.format(self.w, self.t, self.x)
+
+
+    def parse(self, response):
+        """
+        Verify that the response is HTTP status 200 and parse the response
+        as JSON.
+        """
+        self.assertEqual(response.status_code, 200)
+        d = json.loads(response.content)
+
+        # Convert unicode keys into strings.
+        return dict({ (str(k), v) for k,v in d.iteritems() })
+
+
+    def testEvalSimple(self):
+        """
+        Simple test of the eval function
+        """
+        # Query the eval function
+        response = self.client.get(self.standardUrl)
+        d = self.parse(response)
+
+        # Verify that we got a response of the correct type
+        self.assertTrue( "y" in d )
+        y = bls.unwrapY(d["y"])
+        p = bls .unwrapP(d["p"])
+        self.assertTrue(isinstance(y, G1Element))
+        self.assertTrue(isinstance(p, G2Element))
+
+
+    def testEvalStable(self):
+        """
+        Runs eval a number of times and verifies thatL intermediate results
+        differ (because blinding is randomized), and final result is always
+        the same.
+        """
+        y1, p1 = self.runClientEval()
+        y2, p2 = self.runClientEval()
+
+        # Verify that result and pubkey are the same
+        self.assertEqual(y1, y2)
+        self.assertEqual(p1, p2)
+
+
+    def runClientEval(self):
+        """
+        Runs the client-side eval() and returns the resulting values
+        after they've been unwrapped.
+        """
+        # Query the eval function
+        response = self.client.get(self.standardUrl)
+        d = self.parse(response)
+
+        # Unwrap the results.
+        return bls.unwrapY(d["y"]), bls.unwrapP(d["p"])
+
+
+    def testProofOmmitted(self):
+        """
+        Requests eval with proof omitted.
+        """
+        # Request eval with no proof
+        response = self.client.get(self.standardUrl + "&skipproof=true")
+
+        # Check the response and ensure there is no proof included.
+        r = json.loads(response.content)
+        self.assertTrue( "p" not in r and "c" not in r and "u" not in r)
+
+
+    def parseResponse(self, response):
+        """
+        Verifies the response code is HTTP 200 and parses the JSON response.
+        @returns a dictionary of the response contents.
+        """
+        self.assertEqual(response.status_code, 200)
+        return json.loads(response.content)
+
+
+    def testProof(self):
+        """
+        Ensures the proof is valid.
+        """
+        # Query eval function
+        y,p = self.runClientEval()
+
+        # Test the proof
+        self.assertTrue( bls.verify(self.x, self.t, y, (p,None,None), 
                 errorOnFail=False) )
