@@ -20,13 +20,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_KEY = '0n#@y-#*rgd_mih%i233+vp#+bl6)&4vjbd0dm2xo87^#eh+2f'
 
 # Development settings
-DEBUG = True
-ALLOWED_HOSTS = []
+#DEBUG = True
+#ALLOWED_HOSTS = []
 # TEMPLATE_DEBUG = True
 
 # Production settings
-# DEBUG = False
-# ALLOWED_HOSTS = ['*']
+DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 # Unlimited peristent db connections. I doubt this impacts our mongoengin connections though.
 CONN_MAX_AGE = None
