@@ -1,1 +1,1 @@
-throughput.sh && throughput-static.sh
+./throughput.sh && ./throughput-static.sh
