@@ -17,9 +17,9 @@ then
     TIME=30
 else
     # Full test
-    LOW=103
-    HIGH=2003
-    STEP=50
+    LOW=503
+    HIGH=20003
+    STEP=500
     TIME=90
 fi
 
@@ -48,8 +48,8 @@ BLS_URL="/pythia/eval-bls?x=Thisisatestmessage&t=thisisatesttweakvalue&w=webserv
 VPOP_URL="/pythia/eval?x=AxRzcDQgF8-yJOZCvYtkVsMrFpcXXDovK_FZ0n-QX8Wh&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
 
 #URLS=("$STATIC_URL" "$VPRF_URL" "$BLS_URL" "$VPOP_URL")
-URLS=("$VPRF_URL" "$BLS_URL" "$VPOP_URL")
-#URLS=($STATIC_URL)
+#URLS=("$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+URLS=($STATIC_URL)
 
 
 # Run httperf

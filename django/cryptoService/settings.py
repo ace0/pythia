@@ -16,31 +16,29 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# TODO: Read this from an S3 bucket
 SECRET_KEY = '0n#@y-#*rgd_mih%i233+vp#+bl6)&4vjbd0dm2xo87^#eh+2f'
 
 # Development settings
-#DEBUG = True
-#ALLOWED_HOSTS = []
-# TEMPLATE_DEBUG = True
+DEBUG = True
+ALLOWED_HOSTS = []
 
 # Production settings
-DEBUG = False
-ALLOWED_HOSTS = ['*']
+#DEBUG = False
+#ALLOWED_HOSTS = ['*']
 
 # Unlimited peristent db connections. I doubt this impacts our mongoengin connections though.
-CONN_MAX_AGE = None
+#CONN_MAX_AGE = None
 
 # Application definition
-INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
+INSTALLED_APPS = ('pythiaPrfService',  'django.contrib.sessions')
+# )
+#    'django.contrib.admin',
+#    'django.contrib.auth',
+#    'django.contrib.contenttypes',
+#    'django.contrib.sessions',
 #    'django.contrib.messages',
 #    'django.contrib.staticfiles',
-    'pythiaPrfService'
-)
+
 MIDDLEWARE_CLASSES = ()
 ROOT_URLCONF = 'cryptoService.urls'
 WSGI_APPLICATION = 'cryptoService.wsgi.application'
