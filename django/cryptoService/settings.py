@@ -7,10 +7,10 @@ Django settings for cryptoService project.
 SECRET_KEY = '0n#@y-#*rgd_mih%i233+vp#+bl6)&4vjbd0dm2xo87^#eh+2f'
 
 # Development settings
-DEBUG = True
+#DEBUG = True
 
 # Production settings
-#DEBUG = False
+DEBUG = False
 
 INSTALLED_APPS = ('pythiaPrfService',)
 MIDDLEWARE_CLASSES = ()
