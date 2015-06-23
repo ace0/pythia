@@ -1,31 +1,34 @@
 #!/bin/bash -e
 # Measure throughput using distributed autobench
 
-CLIENTS=(localhost 172.31.8.148 172.31.8.149)
+TEST="FAST"
 QUIET="1"
-#TEST="FAST"
+CLIENTS=(localhost 172.31.10.36)
+#CLIENTS=(localhost)
 
 # Choose test settings.
-# NOTE: When setting LOW/HIGH - this must be an integer dividable by the number of CLIENTS
-#       or httperf dies with an error. :/
+# NOTE: When setting LOW/HIGH - this must be an integer divisable by the number of CLIENTS
+#       or httperf dies with a non-obvious error. :/
 if [ "$TEST" = "FAST" ]
 then
     # Fast test    
-    LOW=1003
-    HIGH=2003
-    STEP=400
+    LOW=400
+    HIGH=800
+    STEP=100
     TIME=30
 else
     # Full test
-    LOW=103
-    HIGH=2003
+    set -x 
+    LOW=50
+    HIGH=2000
     STEP=50
     TIME=90
+    set +x
 fi
 
 SERVER=$(cat server.ip)
 PORT=4600 # autobenchd port
-TIMEOUT=30
+TIMEOUT=10
 FMT=csv 
 
 ##
@@ -38,7 +41,6 @@ done
 # Delete the final comma
 CLIENT_LIST=${CLIENT_LIST::-1}
 
-
 ##
 # URL list
 ##
@@ -47,10 +49,11 @@ VPRF_URL="/pythia/eval-unb?x=This+is+my+next&t=super%2Bsecret_tweak&w=super_secr
 BLS_URL="/pythia/eval-bls?x=Thisisatestmessage&t=thisisatesttweakvalue&w=webserverid"
 VPOP_URL="/pythia/eval?x=AxRzcDQgF8-yJOZCvYtkVsMrFpcXXDovK_FZ0n-QX8Wh&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
 
-#URLS=("$STATIC_URL" "$VPRF_URL" "$BLS_URL" "$VPOP_URL")
-URLS=("$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+URLS=("$STATIC_URL" "$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+#URLS=("$VPOP_URL")
 #URLS=($STATIC_URL)
-
+#URLS=("$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+#URLS=("$BLS_URL" "$VPOP_URL" "$VPRF_URL" "$STATIC_URL")
 
 # Run httperf
 function run-httperf()
@@ -67,7 +70,6 @@ function run-httperf()
 function run-autobench()
 {
     url="$1"
-    #--quiet \
     autobench_admin --clients $CLIENT_LIST --single_host \
 	--host1 $SERVER --uri1 "$url" --port1 443 \
 	--low_rate $LOW --high_rate $HIGH --rate_step $STEP \
