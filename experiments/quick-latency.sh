@@ -1,1 +1,1 @@
-bash run-latency-tests.sh 100
+bash run-latency-tests.sh 10

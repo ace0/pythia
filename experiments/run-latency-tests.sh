@@ -24,11 +24,11 @@ function runAll()
     SERVICE=$1
     echo $SERVICE
     echo =======================================
-    python clientlatency.py $N $URL $SERVICE --cold
+    python clientlatency.py $N $URL $SERVICE --cold 
     echo
-    python clientlatency.py $N $URL $SERVICE
+    python clientlatency.py $N $URL $SERVICE 
     echo
-    python clientlatency.py $N $URL $SERVICE --noproof
+    python clientlatency.py $N $URL $SERVICE --noproof 
     echo
     echo
     echo
