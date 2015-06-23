@@ -3,8 +3,8 @@
 
 #TEST="FAST"
 QUIET="1"
+TIMEOUT=30
 CLIENTS=(localhost 172.31.10.36)
-#CLIENTS=(localhost)
 
 # Choose test settings.
 # NOTE: When setting LOW/HIGH - this must be an integer divisable by the number of CLIENTS
@@ -12,21 +12,20 @@ CLIENTS=(localhost 172.31.10.36)
 if [ "$TEST" = "FAST" ]
 then
     # Fast test    
-    LOW=400
-    HIGH=800
-    STEP=100
+    LOW=600
+    HIGH=1200
+    STEP=600
     TIME=30
 else
     # Full test
-    LOW=50
+    LOW=500
     HIGH=2000
     STEP=50
-    TIME=90
+    TIME=60
 fi
 
 SERVER=$(cat server.ip)
 PORT=4600 # autobenchd port
-TIMEOUT=10
 FMT=csv 
 
 ##
@@ -42,7 +41,7 @@ CLIENT_LIST=${CLIENT_LIST::-1}
 ##
 # URL list
 ##
-STATIC_URL="/index.html"
+STATIC_URL="/dummy-response.html"
 VPRF_URL="/pythia/eval-unb?x=This+is+my+next&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
 BLS_URL="/pythia/eval-bls?x=Thisisatestmessage&t=thisisatesttweakvalue&w=webserverid"
 VPOP_URL="/pythia/eval?x=AxRzcDQgF8-yJOZCvYtkVsMrFpcXXDovK_FZ0n-QX8Wh&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
