@@ -10,4 +10,7 @@ nginx
 nginx -s stop
 nginx -s reload
 
+Run mongod on development platform
+===============
+mongod --logpath ~/pythia-server/django/mongod.log --fork
 
