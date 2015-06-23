@@ -1,7 +1,7 @@
 #!/bin/bash -e
 # Measure throughput using distributed autobench
 
-TEST="FAST"
+#TEST="FAST"
 QUIET="1"
 CLIENTS=(localhost 172.31.10.36)
 #CLIENTS=(localhost)
@@ -18,12 +18,10 @@ then
     TIME=30
 else
     # Full test
-    set -x 
     LOW=50
     HIGH=2000
     STEP=50
     TIME=90
-    set +x
 fi
 
 SERVER=$(cat server.ip)
