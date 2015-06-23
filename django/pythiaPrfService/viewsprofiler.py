@@ -12,7 +12,7 @@ evalVpop = lambda request: eval(request, vpop)
 evalVprf = lambda request: eval(request, vprf) 
 evalBls = lambda request: eval(request, bls) 
 
-# @profile
+@profile
 def eval(request, prf):
     """
     Process eval @request using @prf. This is a common routine for evalVpop, 
