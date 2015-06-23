@@ -41,15 +41,15 @@ def clientEval(prf, serverEval):
         raise Exception("Server Error: HTTP response code {}".format(response.status_code))
 
     # Decode the JSON response into a dictionary
-    r = json.loads(response.content)
+    d = json.loads(response.content)
 
     # Deserialize the items needed to verify the proof.
-    y = prf.unwrapY(r["y"])
-    p = prf.unwrapP(r["p"])
+    y = prf.unwrapY(d["y"])
+    p = prf.unwrapP(d["p"])
 
     # BLS proofs omit c,u
-    if "c" in r and "u" in r:
-        (c,u) = (prf.unwrapC(r["c"]), prf.unwrapU(r["u"]) )
+    if "c" in d and "u" in d:
+        (c,u) = (prf.unwrapC(d["c"]), prf.unwrapU(d["u"]) )
     else:
         (c,u) = (None,None)
 
@@ -57,6 +57,10 @@ def clientEval(prf, serverEval):
 
     # Test the proof
     prf.verify(x, t, y, pi, errorOnFail=True)
+
+    # Deblind if necessary.
+    if r:
+        z = prf.deblind(r, y)
 
 
 def repeat(func, n):
