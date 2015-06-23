@@ -1,4 +1,4 @@
-N=1000
+N=10000
 LOG=logs/client-server-profile.$(date +"%Y-%m-%d-%H%M").$N
 
 kernprof -l -v profiler.py $N vprf 2>&1 | tee $LOG.vprf
