@@ -1,0 +1,120 @@
+Wrote profile results to profiler.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 49.6321 s
+File: profiler.py
+Function: clientEval at line 25
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    25                                           @profile
+    26                                           def clientEval(prf, serverEval):
+    27                                               """
+    28                                               Runs a client-driven eval request using the provided @prf module and
+    29                                               the @serverEval function.
+    30                                               """
+    31                                               # Make an eval request
+    32     10000        16084      1.6      0.0      r,x = prf.blind(m)
+    33     10000        35020      3.5      0.1      xWrap = prf.wrap(x)
+    34                                           
+    35                                               # Create a request object and query the server
+    36     10000        28211      2.8      0.1      request = dummyRequest(w,t,x=xWrap)
+    37     10000     27262890   2726.3     54.9      response = serverEval(request)
+    38                                           
+    39                                               # Check the response
+    40     10000        10979      1.1      0.0      if response.status_code != 200:
+    41                                                   raise Exception("Server Error: HTTP response code {}".format(response.status_code))
+    42                                           
+    43                                               # Decode the JSON response into a dictionary
+    44     10000       161520     16.2      0.3      d = json.loads(response.content)
+    45                                           
+    46                                               # Deserialize the items needed to verify the proof.
+    47     10000       507614     50.8      1.0      y = prf.unwrapY(d["y"])
+    48     10000       738356     73.8      1.5      p = prf.unwrapP(d["p"])
+    49                                           
+    50                                               # BLS proofs omit c,u
+    51     10000         9689      1.0      0.0      if "c" in d and "u" in d:
+    52                                                   (c,u) = (prf.unwrapC(d["c"]), prf.unwrapU(d["u"]) )
+    53                                               else:
+    54     10000         7260      0.7      0.0          (c,u) = (None,None)
+    55                                           
+    56     10000         7820      0.8      0.0      pi = (p,c,u)
+    57                                           
+    58                                               # Test the proof
+    59     10000     20834027   2083.4     42.0      prf.verify(x, t, y, pi, errorOnFail=True)
+    60                                           
+    61                                               # Deblind if necessary.
+    62     10000        12599      1.3      0.0      if r:
+    63                                                   z = prf.deblind(r, y)
+
+Total time: 27.1638 s
+File: viewsprofiler.py
+Function: eval at line 15
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    15                                           @profile
+    16                                           def eval(request, prf):
+    17                                               """
+    18                                               Process eval @request using @prf. This is a common routine for evalVpop, 
+    19                                               evalVprf (also called eval-unb), and evalBls.
+    20                                               """
+    21     10000         8611      0.9      0.0      required = ["w", "t", "x"]
+    22     10000         8123      0.8      0.0      optional = ["skid", "skipproof"]
+    23                                           
+    24                                               # Parse and validate parameters from the request.
+    25     10000         5387      0.5      0.0      try:
+    26                                                   w,t,x,skid,skipproof = \
+    27     10000       118725     11.9      0.4              getParams(request, required, optional)
+    28                                           
+    29                                               except ServiceException as e:
+    30                                                   return e.errorResponse
+    31                                           
+    32                                               # Include a proof unless there's a specific request to omit it.
+    33     10000         6314      0.6      0.0      proof = not skipproof
+    34                                           
+    35                                               # Check rate-limits
+    36     10000      8520960    852.1     31.4      if not noteQuery(t):
+    37                                                   return ErrorResponse(ERROR_EXCEEDED_QUERY_LIMIT, ERROR_CODE_QUERY_LIMIT)
+    38                                           
+    39                                               # Run eval and send the response as JSON
+    40     10000     18495638   1849.6     68.1      return JsonResponse(runEval(prf,w,t,x,proof))
+
+Total time: 17.8305 s
+File: viewsprofiler.py
+Function: runEval at line 42
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    42                                           @profile
+    43                                           def runEval(prf,w,t,x,proof):
+    44                                               """
+    45                                               Runs the Pythia eval function using @prf.
+    46                                               """
+    47                                               # Deserialize parameter x
+    48     10000        14265      1.4      0.1      x = prf.unwrapX(x)
+    49                                           
+    50                                               # Get the (secret) state table entry assigned to this w
+    51     10000     11700270   1170.0     65.6      s = getStateEntry(w)
+    52     10000      2960496    296.0     16.6      y,kw,tTilde = prf.eval(w,t,x,SERVER_SECRET_KEY,s)
+    53                                           
+    54                                               # Package our results into a dictionary d
+    55     10000       253384     25.3      1.4      d = { "y" : prf.wrap(y),
+    56     10000         7811      0.8      0.0            "message" : "Thank you for using the Pythia PRF service for all your password hardening needs", 
+    57                                                   }
+    58                                           
+    59                                               # Generate a proof, if requested. Note that BLS eval queries don't have any
+    60                                               # proof beyond
+    61     10000         5515      0.6      0.0      if proof:
+    62     10000      2647033    264.7     14.8          p,c,u = prf.prove(x,tTilde,kw,y)
+    63     10000       229867     23.0      1.3          d.update( { "p": prf.wrap(p) } )
+    64                                           
+    65                                                   # The BLS protocol doesn't have items c,u
+    66     10000         6950      0.7      0.0          if c and u:
+    67                                                       d.update( 
+    68                                                           { "c": prf.wrap(c),
+    69                                                             "u": prf.wrap(u)
+    70                                                            } )
+    71                                           
+    72     10000         4863      0.5      0.0      return d
+
