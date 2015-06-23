@@ -1,0 +1,4 @@
+
+Throughput test for /index.html
+===================================
+dem_req_rate,req_rate_172.31.0.233,con_rate_172.31.0.233,min_rep_rate_172.31.0.233,avg_rep_rate_172.31.0.233,max_rep_rate_172.31.0.233,stddev_rep_rate_172.31.0.233,resp_time_172.31.0.233,net_io_172.31.0.233,errors_172.31.0.233
