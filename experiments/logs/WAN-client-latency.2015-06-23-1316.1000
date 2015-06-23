@@ -1,0 +1,39 @@
+vpop
+=======================================
+1000x https://52.8.216.69/pythia/eval keepalive:False proof:True
+402.860 ms (mean)
+
+1000x https://52.8.216.69/pythia/eval keepalive:True proof:True
+97.430 ms (mean)
+
+1000x https://52.8.216.69/pythia/eval keepalive:True proof:False
+84.721 ms (mean)
+
+
+
+vprf
+=======================================
+1000x https://52.8.216.69/pythia/eval-unb keepalive:False proof:True
+389.248 ms (mean)
+
+1000x https://52.8.216.69/pythia/eval-unb keepalive:True proof:True
+82.839 ms (mean)
+
+1000x https://52.8.216.69/pythia/eval-unb keepalive:True proof:False
+80.244 ms (mean)
+
+
+
+bls
+=======================================
+1000x https://52.8.216.69/pythia/eval-bls keepalive:False proof:True
+391.897 ms (mean)
+
+1000x https://52.8.216.69/pythia/eval-bls keepalive:True proof:True
+85.050 ms (mean)
+
+1000x https://52.8.216.69/pythia/eval-bls keepalive:True proof:False
+80.297 ms (mean)
+
+
+
