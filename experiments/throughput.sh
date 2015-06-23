@@ -12,14 +12,14 @@ CLIENTS=(localhost 172.31.10.36)
 if [ "$TEST" = "FAST" ]
 then
     # Fast test    
-    LOW=600
-    HIGH=1200
-    STEP=600
+    LOW=2000
+    HIGH=2400
+    STEP=100
     TIME=30
 else
     # Full test
-    LOW=500
-    HIGH=2000
+    LOW=2000
+    HIGH=2500
     STEP=50
     TIME=60
 fi
@@ -46,9 +46,9 @@ VPRF_URL="/pythia/eval-unb?x=This+is+my+next&t=super%2Bsecret_tweak&w=super_secr
 BLS_URL="/pythia/eval-bls?x=Thisisatestmessage&t=thisisatesttweakvalue&w=webserverid"
 VPOP_URL="/pythia/eval?x=AxRzcDQgF8-yJOZCvYtkVsMrFpcXXDovK_FZ0n-QX8Wh&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
 
-URLS=("$STATIC_URL" "$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+#URLS=("$STATIC_URL" "$VPRF_URL" "$BLS_URL" "$VPOP_URL")
 #URLS=("$VPOP_URL")
-#URLS=($STATIC_URL)
+URLS=($STATIC_URL)
 #URLS=("$VPRF_URL" "$BLS_URL" "$VPOP_URL")
 #URLS=("$BLS_URL" "$VPOP_URL" "$VPRF_URL" "$STATIC_URL")
 
