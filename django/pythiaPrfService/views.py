@@ -12,6 +12,14 @@ evalVpop = lambda request: eval(request, vpop)
 evalVprf = lambda request: eval(request, vprf) 
 evalBls = lambda request: eval(request, bls) 
 
+updateTokenVpop = lambda request: updateToken(request, vpop)
+updateTokenVprf = lambda request: updateToken(request, vprf)
+updateTokenBls = lambda request: updateToken(request, bls) 
+
+deleteVpop = lambda request: delete(request, vpop)
+deleteVprf = lambda request: delete(request, vprf)
+deleteBls = lambda request: delete(request, bls)
+
 
 def eval(request, prf):
     """
@@ -72,100 +80,50 @@ def runEval(prf,w,t,x,proof):
     return d
 
 
-# def updateRequest(request):
-#     """
-#     A client can request to update their ID w to a new ID wPrime.
-#     """
-#     try:
-#         w = getParams(request, ["w"])
-#     except ServiceException as e:
-#         return e.errorResponse
+def updateToken(request, prf):
+    """
+    A client can request to a delta_{k->k'} where k is derived from w and 
+    k' from w'.
+    """
+    # TODO: Add authentication token, but requires an authentication API call.
+    try:
+        w,wPrime = getParams(request, ["w", "wPrime" ])
+    except ServiceException as e:
+        return e.errorResponse
 
-#     # Generate and store a verification code.
-#     vcode = secureRandom()
-#     writeVerificationCode(w, vcode)
+    # TODO: Verify that w' is not already assigned.
+    # NOTE: This version doesn't have any authentication for adminstrative
+    #       API calls like update/delete, so verifying w' assignment is 
+    #       pointless without authentication.
 
-#     # TODO: email verification code. For now, emit the vcode and we can 
-#     # copy/paste it into the client for testing.
-#     print "w: {}\tverification code: {}".format(w, vcode)
+    # Create a new state entry for w.
+    s = getStateEntry(w)
+    sPrime = getStateEntry(wPrime)
 
-#     d = { "status" : "OK", 
-#           "message": "Verification code sent to email address associated "\
-#            "with this client ID w" }
-#     return JsonResponse(d)
+    # Compute delta and new pubkey
+    original = (w,SERVER_SECRET_KEY,s)
+    update = (wPrime,SERVER_SECRET_KEY,sPrime)
+    delta, pPrime = prf.getDelta(original, update)
 
-
-# def updateBegin(request, checkWprime=False):
-#     """
-#     Initiates a client ID w update. Client provides a new client ID, 
-#     wPrime, and a verification code as proof-of-ownership of the client ID. 
-#     Sends an update value delta that permits the client to transition existing
-#     values to the new ID wPrime.
-#     """
-#     # TODO: Permit updates for other groups. For now, assume ECC.
-#     prf = prfEcc
-
-#     # Grab parameters
-#     try:
-#         w,wPrime,vcode = getParams(request, ["w", "wprime", "v"])
-#     except ServiceException as e:
-#         return e.errorResponse
-
-#     # Check the verification code.
-#     if not checkVcode(w, vcode):
-#         return ErrorResponse("Verification code is invalid.")
-
-#     # Verify wPrime not in use
-#     # NOTE: this is necessary to prevent a DoS attack by an adversary that 
-#     #       has stolen a client ID wPrime and is trying to use the update 
-#     #       process (on a new w that she owns) to invalidate an existing wPrime.
-#     if checkWprime and checkStateEntry(wPrime):
-#         return ErrorResponse("wPrime value is not valid.")
-
-#     # Generate delta
-#     z = getStateEntry(w)
-#     zPrime = getStateEntry(wPrime)
-#     delta, pPrime = prf.deltaSlow(w=w, sk=SERVER_SECRET_KEY, z=z, 
-#         wPrime=wPrime, skPrime=SERVER_SECRET_KEY, zPrime=zPrime)
-
-#     # Send the results
-#     d = { "delta": delta, "pPrime": pPrime }
-#     return JsonResponse(d)
+    # Send the results
+    d = { "delta": prf.wrap(delta), "pPrime": prf.wrap(pPrime) }
+    return JsonResponse(d)
 
 
-# def updateComplete(request, finalize=False):
-#     """
-#     Finalizes a client ID update by erasing the state entry for @w. 
-#     """
-#     try:
-#         w,vcode = getParams(request, ["w", "v"])
-#     except ServiceException as e:
-#         return e.errorResponse
+def delete(request, finalize=False):
+    """
+    Erases all information encrypted or protected under the key Kw by destroying
+    Kw.
+    """
+    try:
+        w = getParams(request, ["w"])
+    except ServiceException as e:
+        return e.errorResponse
 
-#     # Check the verification code
-#     if not checkVcode(w, vcode):
-#         return ErrorResponse("Verification code is invalid.")
-
-#     # Remove existing state and verification code.
-#     dropStateEntry(w)
-#     dropVerificationCode(w)
-
-#     d = { "status" : "OK", "message": "Operation complete" }
-#     return JsonResponse(d)
-
-
-# def checkVcode(w, vcodeClient, skipCheck=True):
-#     """
-#     Checks a verification code @vcodeClient for @w unless @skipCheck is set for 
-#     debugging.
-#     """
-#     # If debugging
-#     if skipCheck:
-#         return True
-
-#     # Grab the verification code and validate the client-provided code.
-#     vcodeServer = getVerificationCode(w)
-#     return (not vcodeServer or vcodeServer != vcodeClient)
+    # Remove existing state and verification code.
+    dropStateEntry(w)
+    d = { "status" : "OK", "message": "Operation complete" }
+    return JsonResponse(d)
 
 
 def getParams(request, required, optional=None):
