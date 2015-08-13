@@ -1,0 +1,1 @@
+./throughput.sh && ./throughput-static.sh

@@ -6,12 +6,20 @@ from django.conf.urls import include, url
 import views
 
 urlpatterns = [
-    url(r'^eval$', views.evalVpop),
+
+    # PRF evaluation requests
+    url(r'^eval$',     views.evalVpop),
     url(r'^eval-unb$', views.evalVprf),
     url(r'^eval-bls$', views.evalBls),
 
-	# Client key rotation
-	# url(r'^update-request$', views.updateRequest),
-	# url(r'^update-begin$', views.updateBegin),
-	# url(r'^update-complete$', views.updateComplete),
+    # Client-side key rotation
+    url(r'^updateToken$',     views.updateTokenVpop),
+    url(r'^updateToken-unb$', views.updateTokenVprf),
+    url(r'^updateToken-bls$', views.updateTokenBls),
+ 
+    # Key deletion
+    url(r'^delete$',     views.deleteVpop),
+    url(r'^delete-unb$', views.deleteVprf),
+    url(r'^delete-bls$', views.deleteBls),
+
 ]

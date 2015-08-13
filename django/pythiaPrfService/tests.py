@@ -9,17 +9,17 @@ from pyrelic.pbc import G1Element, G2Element
 from crypto import *
 
 
+# Dummy values for test cases
+w = "abcdefg0987654321"
+t = "123456789poiuytrewq"
+pw = "super secret pw"
+
+
 class VpopEvalTest(SimpleTestCase):
     """
     Tests the eval API.
     """
     urlTemplate = "/pythia/eval?w={}&t={}&x={}"
-
-    # Dummy balues that can be used for testing
-    w = "abcdefg0987654321"
-    t = "123456789poiuytrewq"
-    pw = "super secret pw"
-
 
     def checkErrorResponse(self, response):
         """
@@ -69,15 +69,14 @@ class VpopEvalTest(SimpleTestCase):
         self.checkErrorResponse(response)
 
 
-
     def testEvalSimple(self):
         """
         Simple test of the eval function
         """
-        r,x = vpop.blind(VpopEvalTest.pw)
+        r,x = vpop.blind(pw)
         x = vpop.wrap(x)
 
-        response = self.client.get(VpopEvalTest.urlTemplate.format(VpopEvalTest.w,VpopEvalTest.t,x))
+        response = self.client.get(VpopEvalTest.urlTemplate.format(w,t,x))
         d = self.check(response)
 
         y = vpop.unwrapGt(str(d["y"]))
@@ -90,8 +89,8 @@ class VpopEvalTest(SimpleTestCase):
         differ (because blinding is randomized), and final result is always
         the same.
         """
-        y1,z1 = self.runClientEval(VpopEvalTest.w, VpopEvalTest.t, VpopEvalTest.pw)
-        y2,z2 = self.runClientEval(VpopEvalTest.w, VpopEvalTest.t, VpopEvalTest.pw)
+        y1,z1 = self.runClientEval(w, t, pw)
+        y2,z2 = self.runClientEval(w, t, pw)
 
         # Verify that the intermediate results differ
         self.assertNotEqual(y1,y2)
@@ -161,9 +160,9 @@ class VpopEvalTest(SimpleTestCase):
         Ensures the proof is valid.
         """
         # Make an eval request
-        r,x = vpop.blind(VpopEvalTest.pw)
+        r,x = vpop.blind(pw)
         xWrap = vpop.wrap(x)
-        url = VpopEvalTest.urlTemplate.format(VpopEvalTest.w,VpopEvalTest.t,xWrap)
+        url = VpopEvalTest.urlTemplate.format(w,t,xWrap)
         r = self.parseResponse(self.client.get(url))
 
         # Deserialize the items needed to verify the proof.
@@ -171,7 +170,7 @@ class VpopEvalTest(SimpleTestCase):
         pi = (vpop.unwrapP(r["p"]), vpop.unwrapC(r["c"]), vpop.unwrapU(r["u"]) )
 
         # Test the proof
-        self.assertTrue( vpop.verify(x, VpopEvalTest.t, y, pi) )
+        self.assertTrue( vpop.verify(x, t, y, pi) )
 
 
     def getUrl(self):
@@ -180,9 +179,9 @@ class VpopEvalTest(SimpleTestCase):
         parameters with a freshly blinded value x.
         @returns r, url  where r is the value required for deblinding.
         """
-        r,x = vpop.blind(VpopEvalTest.pw)
+        r,x = vpop.blind(pw)
         x = vpop.wrap(x)
-        return r, VpopEvalTest.urlTemplate.format(VpopEvalTest.w,VpopEvalTest.t,x)
+        return r, VpopEvalTest.urlTemplate.format(w,t,x)
 
 
 class UnbEvalTest(SimpleTestCase):
@@ -395,3 +394,94 @@ class BlsEvalTest(SimpleTestCase):
         # Test the proof
         self.assertTrue( bls.verify(self.x, self.t, y, (p,None,None), 
                 errorOnFail=False) )
+
+
+class VpopAdvTest(SimpleTestCase):
+    """
+    Tests updates and deletions for the vpop PRF.
+    """
+    urlEval = "/pythia/eval?w={}&t={}&x={}"
+    urlUpdate = "/pythia/updateToken?w={}&wPrime={}"
+    urlDelete = "/pythia/delete?w={}"
+
+
+    def check(self, response, key=None):
+        """
+        Verifies that the response is HTTP 200 and optionally extracts a single
+        key from the response dictionary.
+        """
+        # Verify the status code and parse the repsonse as JSON
+        self.assertEqual(response.status_code, 200)
+        respDict = json.loads(response.content)
+
+        # Check for and extract a key if requested
+        if key:
+            self.assertTrue(key in respDict)
+            return respDict[key]
+
+
+    def eval(self,w,t,pw):
+        """
+        Runs an eval and returns the result.
+        """
+        # Blind and serialize the pw
+        r,x = vpop.blind(pw)
+        x = vpop.wrap(x)
+
+        # Call the URL and verify the response
+        response = self.client.get(VpopAdvTest.urlEval.format(w,t,x))
+        ySerial = str(self.check(response, "y"))
+
+        # Deserialize and de-blind the result.
+        y = vpop.unwrapY(ySerial)
+        return vpop.deblind(r,y)
+
+
+    def testUpdate(self):
+        """
+        Tests client-side key rotation.
+        """
+        # Encrypt a pw under the default w.
+        z = self.eval(w,t,pw)
+
+        # Create new w' and get an update token
+        wPrime = "Not your Daddy's identifier"
+        response = self.client.get(VpopAdvTest.urlUpdate.format(w,wPrime))
+        deltaSerial = self.check(response, "delta")
+        delta = vpop.unwrapDelta(deltaSerial)
+
+        # Update z
+        zPrime1 = vpop.update(z, delta)
+
+        # Re-run eval using w' and verify the result.
+        zPrime2 = self.eval(wPrime,t,pw)
+        self.assertEqual(zPrime1, zPrime2)
+
+
+    def testDeleteSimple(self):
+        """
+        Tests key deletion by simply verifying that the call suceeds and 
+        returns an positive status code and message.
+        """
+        response = self.client.get(VpopAdvTest.urlDelete.format(w))
+        status = self.check(response, "status")
+        self.assertEqual(str(status), "OK")
+
+
+    def testDelete(self):
+        """
+        Tests key deletion by checking that eval results change after a
+        deletion.
+        """
+        # Encrypt a pw under the default w.
+        z1 = self.eval(w,t,pw)
+
+        # Request key deletion
+        response = self.client.get(VpopAdvTest.urlDelete.format(w))
+        self.check(response, "status")
+
+        # Try again and test
+        z2 = self.eval(w,t,pw)
+        self.assertNotEqual(z1,z2)
+
+

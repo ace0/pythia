@@ -1,48 +1,77 @@
-#!/bin/bash
+#!/bin/bash -e
 # Measure throughput using distributed autobench
 
+#TEST="FAST"
+QUIET="1"
+TIMEOUT=30
+CLIENTS=(localhost 172.31.10.36)
+
+# Choose test settings.
+# NOTE: When setting LOW/HIGH - this must be an integer divisable by the number of CLIENTS
+#       or httperf dies with a non-obvious error. :/
+if [ "$TEST" = "FAST" ]
+then
+    # Fast test    
+    LOW=2000
+    HIGH=2400
+    STEP=100
+    TIME=30
+else
+    # Full test
+    LOW=2000
+    HIGH=2500
+    STEP=50
+    TIME=60
+fi
+
 SERVER=$(cat server.ip)
+PORT=4600 # autobenchd port
+FMT=csv 
 
-# Full test
-LOW=100
-HIGH=1000
-STEP=50
-TIME=60
-CLIENTS="localhost:4600,172.31.0.54:4600,172.31.0.55:4600"
+##
+# Build the client list string
+##
+for client in "${CLIENTS[@]}"
+do
+    CLIENT_LIST="${CLIENT_LIST}$client:$PORT,"
+done
+# Delete the final comma
+CLIENT_LIST=${CLIENT_LIST::-1}
 
-# Fast test
-LOW=400
-HIGH=1500
-STEP=100
-TIME=30
-CLIENTS="localhost:4600"
+##
+# URL list
+##
+STATIC_URL="/dummy-response.html"
+VPRF_URL="/pythia/eval-unb?x=This+is+my+next&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
+BLS_URL="/pythia/eval-bls?x=Thisisatestmessage&t=thisisatesttweakvalue&w=webserverid"
+VPOP_URL="/pythia/eval?x=AxRzcDQgF8-yJOZCvYtkVsMrFpcXXDovK_FZ0n-QX8Wh&t=super%2Bsecret_tweak&w=super_secret%2Bclient-id"
 
-STATIC_URL="/index.html"
-
-#EC_URL="/pythia/query-ecc?w=ksENYiseNHMWYLFEiasPb1Ic2b8CdJZqO2xiCBXFTnk=&t=SjjZwHYwrNlGgE7A9Iu5Y90na_d56paKdgTJSPhfzS0=&m=CalPx0KNd53LLsvNEkSjeiLCeGkt_y2FpVaPO_hN-Wg="
-
-#BLS_URL="/pythia/query-bls?w=ksENYiseNHMWYLFEiasPb1Ic2b8CdJZqO2xiCBXFTnk=&t=SjjZwHYwrNlGgE7A9Iu5Y90na_d56paKdgTJSPhfzS0=&m=CalPx0KNd53LLsvNEkSjeiLCeGkt_y2FpVaPO_hN-Wg="
-
-#OBLS_URL="/pythia/oquery-bls?w=ksENYiseNHMWYLFEiasPb1Ic2b8CdJZqO2xiCBXFTnk=&t=SjjZwHYwrNlGgE7A9Iu5Y90na_d56paKdgTJSPhfzS0=&m=2:ijH1B_8W13fmejcGCi-R5EBh3Q0q-sY3jk1M7Y1VXdFJ_iTC_hnDF1IRFTHIAkMNqlHrDj6jYIk37SGsqrtCsaHA49qlQ_x5xZpfvtMyoSK64j8mBkkKpJUtQ6U55pA4zWIiVjRJed4Th4ARmAB96BgubNwJwit8zCBzxAXC5vD__9NXoEfhdn_yYyIRVolxqSr0jt2q5byr-9ApI9OzMto_VcCbgGSk"
-
-URLS=("$EC_URL" "$BLS_URL" "$OBLS_URL")
+#URLS=("$STATIC_URL" "$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+#URLS=("$VPOP_URL")
 URLS=($STATIC_URL)
+#URLS=("$VPRF_URL" "$BLS_URL" "$VPOP_URL")
+#URLS=("$BLS_URL" "$VPOP_URL" "$VPRF_URL" "$STATIC_URL")
 
-TIMEOUT=5
-CLIENT2=localhost
-CPORT=4600
-FMT=csv
-#FMT=tsv
+# Run httperf
+function run-httperf()
+{
+    url="$1"
+    RATE=100
+    CONN=10000
+    httperf --server $SERVER --uri "$url" --ssl --rate $RATE \
+	--num-conn $CONN --num-call 1 --timeout $TIMEOUT \
+        --print-request=header --print-reply=header
+}
 
+# Run autobench on the specified URL
 function run-autobench()
 {
     url="$1"
-    autobench_admin --clients $CLIENTS --quiet --single_host \
+    autobench_admin --clients $CLIENT_LIST --single_host \
 	--host1 $SERVER --uri1 "$url" --port1 443 \
 	--low_rate $LOW --high_rate $HIGH --rate_step $STEP \
         --const_test_time $TIME --num_call 1 --timeout $TIMEOUT \
-	--output_fmt $FMT \
-	2> /dev/null
+	--output_fmt $FMT
 }
 
 # Run throughput measurements against each URL
@@ -50,13 +79,11 @@ for url in "${URLS[@]}"
 do
     echo
     echo "Throughput test for ${url}"
-    echo
-    run-autobench "$url" 
+    echo "==================================="
+
+    if [ "$QUIET" = "1" ]; then
+	run-autobench "$url" 2>/dev/null
+    else
+	run-autobench "$url" 
+    fi
 done
-
-
-# Running httperf
-#RATE=600
-#CONN=36000
-#httperf --server $SERVER --uri "$URL" --ssl --rate $RATE \
-#    --num-conn $CONN --num-call 1 --timeout $TIMEOUT
