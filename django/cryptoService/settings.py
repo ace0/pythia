@@ -16,3 +16,4 @@ INSTALLED_APPS = ('pythiaPrfService',)
 MIDDLEWARE_CLASSES = ()
 ROOT_URLCONF = 'cryptoService.urls'
 WSGI_APPLICATION = 'cryptoService.wsgi.application'
+ALLOWED_HOSTS = ['192.168.200.71']
