@@ -1,9 +1,9 @@
 """
 URLs configured for our remote cryptographic services.
 """
-from django.conf.urls import patterns, include, url
+from django.conf.urls import  include, url
 from django.contrib import admin
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^pythia/', include('pythiaPrfService.urls')),
-)
+]

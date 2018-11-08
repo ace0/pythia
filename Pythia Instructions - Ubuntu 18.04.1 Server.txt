@@ -1,0 +1,125 @@
+1.  Start with fresh install of Ubuntu Server 18.04.1 LTS
+
+2.  ** instructions to uninstall Python 3.6
+
+3.  ** instructions to install Python 2
+
+4.  ** Instructions to install Mongodb
+
+5.  ** Install Instructions for django for Python 2
+
+5.  ** Instructions to install Ngnix
+
+6.  Fork the latest Pythia source from GitHub
+
+7.  Transfer the source code to dir on Ubuntu  ## Recommend to use system wide available location like /opt
+
+8.  Install Python pip
+	a.  Update the apt sources list by opening /etc/apt/sources.list file and adding 'universe' at the end of each line.  Your sources list sould look like this:
+		deb http://archive.ubuntu.com/ubuntu bionic main universe
+		deb http://archive.ubuntu.com/ubuntu bionic-security main universe
+		deb http://archive.ubuntu.com/ubuntu bionic-updates main universe
+	b. run apt update as a root
+		-> sudo apt update
+	c. Install Python pip
+		-> sudo apt install python-pip
+
+9. Run Python server to make sure everything is configured correctly and we can create django app 
+	a.  Update the /opt/pythia/django/cryptoService/urls.py file  ** Note: this is assuming that you transferred pythia folder to /opt and did not download the latest commit from BitHub
+	b.  Your /opt/pythia/django/cryptoService/urls.py should look like this after taking out entry from patterns:
+		"""
+		URLs configured for our remote cryptographic services.
+		"""
+		from django.conf.urls import  include, url
+		from django.contrib import admin
+
+		urlpatterns = [
+    		url(r'^pythia/', include('pythiaPrfService.urls')),
+		]
+	c.  run the Python server
+		-> python manage.py runserver  ** Note: Run this command from /opt/pythia/django folder, once again, assuming you are working of /opt directory
+	d.  you should see output similar to this:
+		**** Insert Picture of Terminal *****
+		Django version 1.11.16, using settings 'cryptoService.settings'
+		Starting development server at http://127.0.0.1:8000/
+		Quit the server with CONTROL-C.
+		**** Insert Picture from the Browser ***
+
+10.  Configure the crpto service so that it allowed connections from our machine
+	a.  Edit the /opt/pythia/django/cryptoService/settings.py and add followin line
+		-> ALLOWED_HOSTS=['<ip address of your machine without brackets>']
+
+11.  Configure uwsgi  ****WORK ON MAKING IT PART OF SYSTEMD Servive, so it starts at system start up ****
+	a.  Edit Paths in /opt/pythia/config/django-uwsgi.ini
+		set chdir to /opt/pythia/django
+		set socket to /opt/pythia/django/app-server.sock
+	b.  Create a socket
+		-> mkfifo /opt/pythia/django/app-server.sock
+	c.  Start the uwsgi service
+		-> uwsgi --ini /opt/pythia/config/django-uwsgi.ini
+		*** Add screen shot of spanned processes ***
+
+12.  Configure nginx and point it to uwsgi instance created in step 10.
+	a.  Edit /opt/pythia/config/nginx.conf and make sure all paths are correct.  ** Basically you want to make sure they relate to your environment **
+	b.  Edit /opt/pythia/config/django-nginx.conf.  This is where we point nginx to our socket created in step 10.  So that it is used by django
+		set server to unix:///opt/pythia/django/app-server.sock
+	
+13.  Configure the nginx. Edit /opt/pythia/config/django-nginx.conf file
+	a.  Set server_name to the ip address of your server.  ***Note: This needs to be done for two server_name entries***
+	b.  Generate self signed certificates:
+		-> /usr/bin/openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+	c.  Move the cert.pem to /etc/ssl/certs dir
+		-> sudo mv cert.pem /etc/ssl/certs/
+	d.  Move the key.pem to /etc/ssl/private dir
+		-> sudo mv cert.pem /etc/ssl/private/
+	e.  Edit /opt/pythia/config/django-nginx.conf file once again and set the following values for ssl
+	    ssl_certificate        /etc/ssl/certs/cert.pem;
+	    ssl_certificate_key    /etc/ssl/private/key.pem;
+
+14.  Configure the nginx so that it is run with our nginx configuration file
+	a.  Make a backup of original nginx configuration file
+		-> cd /etc/nginx
+		-> sudo mv nginx.conf nginx.conf.orig
+	b.  Create a link from our nginx.conf file
+		-> sudo ln -s /opt/pythia/config/nginx.conf nginx.conf
+	c.  Remove the default from nginx
+		-> sudo rm /etc/nginx/default
+	d.  Finally add our django app
+		-> ln -s /opt/pythia/config/django-nginx.conf django.conf
+	e.  And ask nginx to reload our configuration
+		-> nginx -s reload
+	d.  If and only if nginx was not running at point e above, start it
+		-> service nginx start 
+
+15.  Configure the nginx to display our static page as default page.  The pythia comes with simple default page that you use 
+	a.  Create a root diretory for our web server
+		-> sudo mkdir /wwwrooot
+		-> ln -s /opt/pythia/static-html/ /www/static
+	b.  (Optional) Open the default html page, /www/static/index.html, and fix the link pointing to romote-crypto eval location to the IP address of your server.
+
+16.  Open your browser and point it to the IP address of your server.
+
+	****Add Image of default Page****
+
+17.  Click on Remote Crypto-crypto.pythia.eval link and if you did not fix the link location in step 15 b above, fix the url in address bar of browser and point to the ip address of your server !!!
+
+ 
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
